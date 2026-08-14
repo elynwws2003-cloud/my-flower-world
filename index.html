@@ -197,37 +197,35 @@ async function loadAll(){
  }catch(e){connection.textContent='❌ 连接失败：'+e.message}
 }
 function myMember(){
- // 1. Normal member session: match the Supabase user id.
- let mine=members.find(m=>m.user_id===sessionUser?.id);
- if(mine){localStorage.setItem(MEMBER_STORAGE_KEY,mine.id);return mine}
- // 2. Admin account can also represent its linked garden member.
- const mappedName=ADMIN_MEMBER_MAP[(sessionUser?.email||'').toLowerCase()];
- if(mappedName){
-  mine=members.find(m=>m.name===mappedName);
-  if(mine){localStorage.setItem(MEMBER_STORAGE_KEY,mine.id);return mine}
- }
- // 3. Keep the selected member identity while switching admin/member mode or refreshing.
+ // 1. Member identity is remembered locally per website/domain.
+ // This avoids a member disappearing when the same database is opened
+ // from Netlify, Cloudflare, GitHub Pages, etc.
  const savedId=localStorage.getItem(MEMBER_STORAGE_KEY);
  if(savedId){
-  mine=members.find(m=>m.id===savedId);
+  const mine=members.find(m=>m.id===savedId);
   if(mine)return mine;
-  localStorage.removeItem(MEMBER_STORAGE_KEY)
+  localStorage.removeItem(MEMBER_STORAGE_KEY);
+ }
+ // 2. Admin account can still map to its garden member automatically.
+ const mappedName=ADMIN_MEMBER_MAP[(sessionUser?.email||'').toLowerCase()];
+ if(mappedName){
+  const mine=members.find(m=>m.name===mappedName);
+  if(mine){localStorage.setItem(MEMBER_STORAGE_KEY,mine.id);return mine}
  }
  return undefined
 }
 function renderIdentity(){
  const mine=myMember();
- myMemberSelect.innerHTML='<option value="">请选择自己的名字</option>'+members.filter(m=>!m.user_id||m.user_id===sessionUser?.id).map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
- myIdentity.textContent=mine?`当前成员：${mine.name}`:'尚未绑定成员身份';
+ myMemberSelect.innerHTML='<option value="">请选择自己的名字</option>'+members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
+ myIdentity.textContent=mine?`当前成员：${mine.name}`:'尚未选择成员身份';
  memberBindArea.style.display=mine?'none':'block';
  memberTools.style.display=mine?'block':'none'
 }
 async function claimMember(){
- const id=myMemberSelect.value;if(!id)return alert('请选择自己的名字');
- const {error}=await sb.rpc('claim_member',{p_member_id:id});
- if(error)return alert('无法绑定：'+error.message);
+ const id=myMemberSelect.value;
+ if(!id)return alert('请选择自己的名字');
  localStorage.setItem(MEMBER_STORAGE_KEY,id);
- await loadAll()
+ renderAll();
 }
 function renderCatalog(){
  // Guard against browser password-manager/autofill putting the signed-in email in this unrelated search box.
