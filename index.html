@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>我的花园世界｜花花统计</title>
+<meta name="theme-color" content="#e85d9e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="花园世界">
+
+<style>
+*{box-sizing:border-box}
+:root{--pink:#e85d9e;--pink2:#fff1f7;--green:#eefbf1;--text:#3f3f46}
+body{margin:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:linear-gradient(135deg,#fff5fb,#f2fff6);color:var(--text)}
+.app{max-width:1180px;margin:auto;padding:18px}
+.card{background:#fff;border-radius:22px;padding:19px;margin-bottom:15px;box-shadow:0 8px 28px rgba(0,0,0,.06)}
+h1{margin:0 0 5px;font-size:28px}h2{font-size:20px;margin:0 0 14px}.sub,.hint{color:#777}.hint{font-size:13px}
+button,input,select{font:inherit;border-radius:12px;padding:10px 12px;border:1px solid #ddd}
+button{border:none;font-weight:700;cursor:pointer}.primary{background:var(--pink);color:white}.secondary{background:#f3f4f6}.danger{background:#ffe4e6;color:#b42318}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.row button{flex:0 0 auto}
+.status{padding:10px 13px;border-radius:13px;background:#f8fafc;margin-top:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{background:#f3f4f6}.tab.active{background:var(--pink);color:#fff}.panel{display:none}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px}
+.flower{border:1px solid #eee;border-radius:17px;padding:11px;background:#fff}.flower img{width:100%;height:145px;object-fit:cover;border-radius:13px;background:#fafafa}
+.noimg{height:145px;display:grid;place-items:center;font-size:48px;background:#fafafa;border-radius:13px}
+.tag{display:inline-block;background:var(--green);padding:3px 8px;border-radius:999px;font-size:12px}.score{font-weight:800;color:#c2417a}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:700px}th,td{padding:11px;border-bottom:1px solid #eee;text-align:center}th{background:#fff4fa}
+.admin-only{display:none}.hidden{display:none!important}
+.modal{display:none;position:fixed;inset:0;background:#0007;align-items:center;justify-content:center;padding:18px;z-index:999}.modal .card{width:min(420px,100%);margin:0}
+.adminBadge{display:inline-block;padding:5px 10px;background:#fff0f7;color:#c2417a;border-radius:999px;font-size:12px;font-weight:700}
+@media(max-width:700px){.app{padding:12px}h1{font-size:23px}.row{display:grid;grid-template-columns:1fr}.row button{width:100%}.grid{grid-template-columns:1fr 1fr}.flower img,.noimg{height:120px}}
+</style>
+</head>
+<body>
+<div class="app">
+<section class="card">
+<h1>🌸 我的花园世界</h1>
+<div class="sub">多人共用花花统计｜成员免密码｜管理员维护花库</div>
+<div id="connection" class="status">正在连接云端资料…</div>
+<div class="row" style="margin-top:10px">
+<button class="secondary" onclick="openAdminLogin()">🔐 管理员登录</button>
+<button id="adminLogoutBtn" class="danger admin-only" onclick="adminLogout()">退出管理员</button>
+<div id="modeText" class="hint">成员模式</div>
+</div>
+</section>
+
+<section class="card">
+<div class="tabs">
+<button class="tab active" onclick="showTab('mine',this)">🌷 我的花</button>
+<button class="tab" onclick="showTab('lookup',this)">👥 成员互查</button>
+<button class="tab admin-only" onclick="showTab('admin',this)">⚙️ 管理员</button>
+</div>
+</section>
+
+<section id="mine" class="card panel active">
+<h2>🌷 我的花</h2>
+<div id="memberBindArea">
+<div class="hint">第一次使用，请选择自己的成员名字。之后系统会自动记住你，不需要密码。</div>
+<div class="row" style="margin-top:10px">
+<select id="myMemberSelect"></select>
+<button class="primary" onclick="claimMember()">这是我</button>
+</div>
+</div>
+<div id="myIdentity" class="status"></div>
+
+<div id="memberTools">
+<div class="row" style="margin-top:14px">
+<input id="searchFlower" type="search" name="garden_flower_search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="🔎 输入花名搜索" oninput="renderCatalog()">
+<select id="filterClass" onchange="renderCatalog()">
+<option value="">全部分类</option><option>凡</option><option>普</option><option>珍</option><option>华</option><option>仙</option>
+</select>
+</div>
+<div id="catalogGrid" class="grid" style="margin-top:14px"></div>
+
+<h2 style="margin-top:22px">我已拥有</h2>
+<div id="myOwned"></div>
+</div>
+</section>
+
+<section id="lookup" class="card panel">
+<h2>👥 成员互查</h2>
+
+<h3>按成员查询</h3>
+<select id="lookupMember" onchange="renderLookup()" style="width:100%"></select>
+<div id="lookupSummary" class="status">请选择成员</div>
+<div id="lookupResult"></div>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+
+<h3>🌸 按花朵查询</h3>
+<div class="hint">输入花名快速筛选，再选择花朵查看哪些成员拥有。</div>
+<input id="lookupFlowerSearch" type="search" placeholder="🔎 输入花名搜索" oninput="filterFlowerLookup()" autocomplete="off" style="width:100%;margin:10px 0">
+<select id="lookupFlower" onchange="renderFlowerOwners()" style="width:100%"></select>
+<div id="flowerOwnerSummary" class="status">请选择花朵</div>
+<div id="flowerOwnerResult"></div>
+</section>
+
+<section id="admin" class="card panel">
+<div class="admin-only">
+<h2>⚙️ 管理员</h2>
+<div class="adminBadge" id="adminEmailBadge"></div>
+
+<h3>成员管理</h3>
+<div class="row"><input id="newMemberName" placeholder="新增成员名字"><button class="primary" onclick="adminAddMember()">＋ 添加成员</button></div>
+<div id="adminMembers"></div>
+
+<hr style="border:none;border-top:1px solid #eee;margin:22px 0">
+
+<h3>花花资料库</h3>
+<div class="row">
+<input id="newFlowerName" placeholder="花名">
+<select id="newFlowerClass"><option>凡</option><option>普</option><option>珍</option><option>华</option><option>仙</option></select>
+<input id="newFlowerScore" type="number" min="0" value="0" placeholder="公会竞赛分">
+</div>
+<div class="row" style="margin-top:9px">
+<input id="newFlowerImage" type="file" accept="image/*">
+<button class="primary" onclick="adminAddFlower()">＋ 添加花花</button>
+</div>
+<div class="hint">只有管理员可以上传图片及修改公会竞赛分。</div>
+<div id="adminFlowers"></div>
+
+<hr style="border:none;border-top:1px solid #eee;margin:22px 0">
+
+<h3>管理员名额</h3>
+<div class="hint">这里加入管理员邮箱后，还需要在 Supabase Authentication → Users 建立该管理员的 Email/Password 登录账号。</div>
+<div class="row"><input id="newAdminEmail" type="email" placeholder="管理员邮箱"><button class="primary" onclick="adminAddAdmin()">＋ 添加管理员</button></div>
+<div id="adminList"></div>
+</div>
+</section>
+</div>
+
+<div id="adminModal" class="modal">
+<div class="card">
+<h2>🔐 管理员登录</h2>
+<input id="adminEmail" type="email" placeholder="管理员邮箱" autocomplete="username" style="width:100%;margin-bottom:8px">
+<input id="adminPassword" type="password" placeholder="管理员密码" autocomplete="current-password" style="width:100%">
+<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:#555">
+  <input id="rememberAdmin" type="checkbox" checked style="width:auto">
+  记住我，下次自动登录
+</label>
+<div class="hint" style="margin-top:6px">不会把密码写进网页代码；只保存 Supabase 登录状态。</div>
+<div class="row" style="margin-top:12px">
+<button class="secondary" onclick="closeAdminLogin()">取消</button>
+<button class="primary" onclick="adminLogin()">登录</button>
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://vkilecxzwmhbfuybbcrh.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_k6e8rAKC6CAtgOMMJctSwg_o0e9_7Pe';
+</script>
+<script>
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let members=[],flowers=[],memberFlowers=[],admins=[],sessionUser=null,isAdmin=false,anonSessionBackup=null;
+const MEMBER_STORAGE_KEY='garden_active_member_id';
+const ADMIN_REMEMBER_KEY='garden_remember_admin';
+const ADMIN_EMAIL_KEY='garden_admin_email';
+const ADMIN_MEMBER_MAP={'elynw...@gmail.com':'太史玟婷'};
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function showTab(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');btn.classList.add('active')}
+function adminUI(){
+ document.querySelectorAll('.admin-only').forEach(x=>x.style.display=isAdmin?'block':'none');
+ modeText.textContent=isAdmin?`管理员模式：${sessionUser?.email||''}${localStorage.getItem(ADMIN_REMEMBER_KEY)==='true'?'（已自动登录）':''}`:'成员模式（免密码）';
+ if(adminEmailBadge)adminEmailBadge.textContent=sessionUser?.email||'';
+ if(!isAdmin&&admin.classList.contains('active'))showTab('mine',document.querySelector('.tab'));
+}
+async function ensureSession(){
+ const {data}=await sb.auth.getSession();
+ if(data.session){sessionUser=data.session.user;return data.session}
+ const {data:s,error}=await sb.auth.signInAnonymously();
+ if(error)throw error;
+ sessionUser=s.user;return s.session
+}
+async function checkAdmin(){
+ if(!sessionUser || !sessionUser.email){isAdmin=false;return}
+ const {data,error}=await sb.rpc('is_admin');
+ isAdmin=!error&&data===true
+}
+async function loadAll(){
+ try{
+  const [m,f,mf]=await Promise.all([
+   sb.from('members').select('*').order('name'),
+   sb.from('flowers').select('*').order('category').order('name'),
+   sb.from('member_flowers').select('*')
+  ]);
+  if(m.error)throw m.error;if(f.error)throw f.error;if(mf.error)throw mf.error;
+  members=m.data||[];flowers=f.data||[];memberFlowers=mf.data||[];
+  if(isAdmin){
+   const a=await sb.from('admins').select('*').order('email');
+   admins=a.error?[]:(a.data||[]);
+  }
+  connection.textContent='✅ 已连接「我的花园世界」云端资料';
+  renderAll()
+ }catch(e){connection.textContent='❌ 连接失败：'+e.message}
+}
+function myMember(){
+ // 1. Normal member session: match the Supabase user id.
+ let mine=members.find(m=>m.user_id===sessionUser?.id);
+ if(mine){localStorage.setItem(MEMBER_STORAGE_KEY,mine.id);return mine}
+ // 2. Admin account can also represent its linked garden member.
+ const mappedName=ADMIN_MEMBER_MAP[(sessionUser?.email||'').toLowerCase()];
+ if(mappedName){
+  mine=members.find(m=>m.name===mappedName);
+  if(mine){localStorage.setItem(MEMBER_STORAGE_KEY,mine.id);return mine}
+ }
+ // 3. Keep the selected member identity while switching admin/member mode or refreshing.
+ const savedId=localStorage.getItem(MEMBER_STORAGE_KEY);
+ if(savedId){
+  mine=members.find(m=>m.id===savedId);
+  if(mine)return mine;
+  localStorage.removeItem(MEMBER_STORAGE_KEY)
+ }
+ return undefined
+}
+function renderIdentity(){
+ const mine=myMember();
+ myMemberSelect.innerHTML='<option value="">请选择自己的名字</option>'+members.filter(m=>!m.user_id||m.user_id===sessionUser?.id).map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
+ myIdentity.textContent=mine?`当前成员：${mine.name}`:'尚未绑定成员身份';
+ memberBindArea.style.display=mine?'none':'block';
+ memberTools.style.display=mine?'block':'none'
+}
+async function claimMember(){
+ const id=myMemberSelect.value;if(!id)return alert('请选择自己的名字');
+ const {error}=await sb.rpc('claim_member',{p_member_id:id});
+ if(error)return alert('无法绑定：'+error.message);
+ localStorage.setItem(MEMBER_STORAGE_KEY,id);
+ await loadAll()
+}
+function renderCatalog(){
+ // Guard against browser password-manager/autofill putting the signed-in email in this unrelated search box.
+ if(sessionUser?.email && searchFlower.value.trim().toLowerCase()===sessionUser.email.trim().toLowerCase()) searchFlower.value='';
+ const q=searchFlower.value.trim().toLowerCase(),cat=filterClass.value,mine=myMember();
+ if(!mine){catalogGrid.innerHTML='';return}
+ const owned=new Set(memberFlowers.filter(x=>x.member_id===mine.id&&x.quantity>0).map(x=>x.flower_id));
+ const data=flowers.filter(f=>(!q||f.name.toLowerCase().includes(q))&&(!cat||f.category===cat));
+ catalogGrid.innerHTML=data.map(f=>`<div class="flower">
+ ${f.image_url?`<img src="${esc(f.image_url)}" alt="${esc(f.name)}">`:'<div class="noimg">🌼</div>'}
+ <b>${esc(f.name)}</b> <span class="tag">${esc(f.category)}</span>
+ <div class="score">公会竞赛分：${f.guild_score||0}</div>
+ <button class="${owned.has(f.id)?'secondary':'primary'}" style="width:100%;margin-top:8px" onclick="addMine('${f.id}')">${owned.has(f.id)?'＋ 再加1朵':'＋ 添加这朵花'}</button>
+ </div>`).join('')||'<div class="hint">没有找到花</div>'
+}
+async function addMine(flowerId){
+ const mine=myMember();if(!mine)return;
+ const row=memberFlowers.find(x=>x.member_id===mine.id&&x.flower_id===flowerId);
+ let r;
+ if(row)r=await sb.from('member_flowers').update({quantity:(row.quantity||0)+1}).eq('member_id',mine.id).eq('flower_id',flowerId);
+ else r=await sb.from('member_flowers').insert({member_id:mine.id,flower_id:flowerId,quantity:1});
+ if(r.error)return alert(r.error.message);await loadAll()
+}
+async function changeQty(flowerId,delta){
+ const mine=myMember();if(!mine)return;
+ const row=memberFlowers.find(x=>x.member_id===mine.id&&x.flower_id===flowerId);if(!row)return;
+ const n=Math.max(0,(row.quantity||0)+delta);
+ const r=n===0?await sb.from('member_flowers').delete().eq('member_id',mine.id).eq('flower_id',flowerId):
+ await sb.from('member_flowers').update({quantity:n}).eq('member_id',mine.id).eq('flower_id',flowerId);
+ if(r.error)return alert(r.error.message);await loadAll()
+}
+function renderMyOwned(){
+ const mine=myMember();if(!mine){myOwned.innerHTML='';return}
+ const rows=memberFlowers.filter(x=>x.member_id===mine.id&&x.quantity>0);
+ if(!rows.length){myOwned.innerHTML='<div class="hint">还没有添加花花</div>';return}
+ myOwned.innerHTML=`<div class="table-wrap"><table><thead><tr><th>花名</th><th>分类</th><th>数量</th><th>公会竞赛分</th><th>操作</th></tr></thead><tbody>${rows.map(r=>{const f=flowers.find(x=>x.id===r.flower_id);if(!f)return'';return `<tr><td>${esc(f.name)}</td><td>${esc(f.category)}</td><td>${r.quantity}</td><td>${f.guild_score||0}</td><td><button class="secondary" onclick="changeQty('${f.id}',1)">＋1</button> <button class="secondary" onclick="changeQty('${f.id}',-1)">－1</button></td></tr>`}).join('')}</tbody></table></div>`
+}
+function renderLookupSelectors(){
+ const oldMember=lookupMember.value, oldFlower=lookupFlower?.value||'';
+ lookupMember.innerHTML='<option value="">请选择成员</option>'+members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
+ if([...lookupMember.options].some(x=>x.value===oldMember))lookupMember.value=oldMember;
+ renderFlowerLookupOptions(oldFlower);
+}
+function renderLookup(){
+ const id=lookupMember.value,m=members.find(x=>x.id===id);
+ if(!m){lookupSummary.textContent='请选择成员';lookupResult.innerHTML='';return}
+ const rows=memberFlowers.filter(x=>x.member_id===id&&x.quantity>0).map(r=>({r,f:flowers.find(x=>x.id===r.flower_id)})).filter(x=>x.f);
+ lookupSummary.textContent=`正在查看：${m.name}`;
+ lookupResult.innerHTML=rows.length?`<div class="grid" style="margin-top:14px">${rows.map(x=>`<div class="flower">${x.f.image_url?`<img src="${esc(x.f.image_url)}" alt="${esc(x.f.name)}">`:'<div class="noimg">🌼</div>'}<b>${esc(x.f.name)}</b> <span class="tag">${esc(x.f.category)}</span><div class="score">公会竞赛分：${x.f.guild_score||0}</div></div>`).join('')}</div>`:'<div class="hint">这个成员还没有花花记录</div>'
+}
+function renderFlowerLookupOptions(selected=''){
+ if(!window.lookupFlower)return;
+ const q=(window.lookupFlowerSearch?.value||'').trim().toLowerCase();
+ const list=flowers.filter(f=>!q||f.name.toLowerCase().includes(q));
+ lookupFlower.innerHTML='<option value="">请选择花朵</option>'+list.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('');
+ if([...lookupFlower.options].some(x=>x.value===selected))lookupFlower.value=selected;
+}
+function filterFlowerLookup(){
+ const old=lookupFlower.value;
+ renderFlowerLookupOptions(old);
+ if(!lookupFlower.value){
+  flowerOwnerSummary.textContent='请选择花朵';
+  flowerOwnerResult.innerHTML='';
+ }else{
+  renderFlowerOwners();
+ }
+}
+function renderFlowerOwners(){
+ const flowerId=lookupFlower.value, f=flowers.find(x=>x.id===flowerId);
+ if(!f){flowerOwnerSummary.textContent='请选择花朵';flowerOwnerResult.innerHTML='';return}
+ const ownerIds=new Set(memberFlowers.filter(x=>x.flower_id===flowerId&&x.quantity>0).map(x=>x.member_id));
+ const owners=members.filter(m=>ownerIds.has(m.id));
+ flowerOwnerSummary.textContent=`${f.name}｜共有 ${owners.length} 位成员拥有`;
+ flowerOwnerResult.innerHTML=owners.length?`<div class="table-wrap"><table><thead><tr><th>拥有成员</th></tr></thead><tbody>${owners.map(m=>`<tr><td>${esc(m.name)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="hint">目前没有成员拥有这朵花</div>'
+}
+function openAdminLogin(){
+ const savedEmail=localStorage.getItem(ADMIN_EMAIL_KEY)||'';
+ if(savedEmail) adminEmail.value=savedEmail;
+ rememberAdmin.checked=localStorage.getItem(ADMIN_REMEMBER_KEY)!=='false';
+ adminModal.style.display='flex';
+}
+function closeAdminLogin(){adminModal.style.display='none'}
+async function adminLogin(){
+ const current=await sb.auth.getSession();
+ if(current.data.session?.user?.is_anonymous)anonSessionBackup=current.data.session;
+ const email=adminEmail.value.trim();
+ const remember=!!rememberAdmin.checked;
+ const {data,error}=await sb.auth.signInWithPassword({email,password:adminPassword.value});
+ if(error)return alert('登录失败：'+error.message);
+ if(remember){
+  localStorage.setItem(ADMIN_REMEMBER_KEY,'true');
+  localStorage.setItem(ADMIN_EMAIL_KEY,email);
+ }else{
+  localStorage.setItem(ADMIN_REMEMBER_KEY,'false');
+  localStorage.removeItem(ADMIN_EMAIL_KEY);
+ }
+ sessionUser=data.user;
+ // Some browsers may autofill the admin email into the flower-search field. Never treat it as a flower query.
+ if(searchFlower && searchFlower.value.trim().toLowerCase()===String(sessionUser?.email||'').trim().toLowerCase()) searchFlower.value='';
+ await checkAdmin();
+ if(!isAdmin){
+  alert('这个账号没有管理员权限');
+  await adminLogout();return
+ }
+ adminPassword.value='';closeAdminLogin();adminUI();await loadAll()
+}
+async function adminLogout(){
+ localStorage.setItem(ADMIN_REMEMBER_KEY,'false');
+ await sb.auth.signOut({scope:'local'});
+ if(anonSessionBackup){
+  const r=await sb.auth.setSession({access_token:anonSessionBackup.access_token,refresh_token:anonSessionBackup.refresh_token});
+  if(!r.error)sessionUser=r.data.user;else{const n=await sb.auth.signInAnonymously();sessionUser=n.data.user}
+ }else{
+  const n=await sb.auth.signInAnonymously();sessionUser=n.data.user
+ }
+ isAdmin=false;admins=[];adminUI();await loadAll()
+}
+async function adminAddMember(){
+ const name=newMemberName.value.trim();if(!name)return;
+ const r=await sb.from('members').insert({name,user_id:null});
+ if(r.error)return alert(r.error.message);newMemberName.value='';await loadAll()
+}
+async function adminDeleteMember(id){
+ if(!confirm('确定删除这个成员及其所有花花记录吗？'))return;
+ const r=await sb.from('members').delete().eq('id',id);if(r.error)return alert(r.error.message);await loadAll()
+}
+async function adminAddFlower(){
+ const name=newFlowerName.value.trim();if(!name)return alert('请输入花名');
+ let image_url=null;
+ const file=newFlowerImage.files[0];
+ if(file){
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  const path=`${crypto.randomUUID()}.${ext}`;
+  const up=await sb.storage.from('flower-images').upload(path,file);
+  if(up.error)return alert('图片上传失败：'+up.error.message);
+  image_url=sb.storage.from('flower-images').getPublicUrl(path).data.publicUrl
+ }
+ const r=await sb.from('flowers').insert({name,category:newFlowerClass.value,guild_score:Math.max(0,Number(newFlowerScore.value)||0),image_url});
+ if(r.error)return alert(r.error.message);
+ newFlowerName.value='';newFlowerScore.value='0';newFlowerImage.value='';await loadAll()
+}
+async function adminUpdateScore(id,v){
+ const r=await sb.from('flowers').update({guild_score:Math.max(0,Number(v)||0)}).eq('id',id);if(r.error)return alert(r.error.message);await loadAll()
+}
+async function adminDeleteFlower(id){
+ if(!confirm('确定删除这朵花吗？成员收藏里的这朵花也会一起移除。'))return;
+ const r=await sb.from('flowers').delete().eq('id',id);if(r.error)return alert(r.error.message);await loadAll()
+}
+async function adminAddAdmin(){
+ const email=newAdminEmail.value.trim().toLowerCase();if(!email)return;
+ const r=await sb.from('admins').insert({email});if(r.error)return alert(r.error.message);
+ newAdminEmail.value='';await loadAll();alert('管理员邮箱已加入。下一步还要在 Supabase Authentication → Users 为这个邮箱建立登录账号和密码。')
+}
+async function adminDeleteAdmin(id,email){
+ if(email===sessionUser?.email)return alert('不能删除自己当前登录的管理员名额');
+ if(!confirm(`确定移除管理员 ${email} 吗？`))return;
+ const r=await sb.from('admins').delete().eq('id',id);if(r.error)return alert(r.error.message);await loadAll()
+}
+function renderAdmin(){
+ if(!isAdmin)return;
+ adminMembers.innerHTML=`<div class="table-wrap"><table><thead><tr><th>成员</th><th>绑定状态</th><th>操作</th></tr></thead><tbody>${members.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.user_id?'已绑定':'未绑定'}</td><td><button class="danger" onclick="adminDeleteMember('${m.id}')">删除</button></td></tr>`).join('')}</tbody></table></div>`;
+ adminFlowers.innerHTML=`<div class="table-wrap"><table><thead><tr><th>花名</th><th>分类</th><th>公会竞赛分</th><th>操作</th></tr></thead><tbody>${flowers.map(f=>`<tr><td>${esc(f.name)}</td><td>${esc(f.category)}</td><td><input style="width:90px" type="number" min="0" value="${f.guild_score||0}" onchange="adminUpdateScore('${f.id}',this.value)"></td><td><button class="danger" onclick="adminDeleteFlower('${f.id}')">删除</button></td></tr>`).join('')}</tbody></table></div>`;
+ adminList.innerHTML=`<div class="table-wrap"><table><thead><tr><th>管理员邮箱</th><th>操作</th></tr></thead><tbody>${admins.map(a=>`<tr><td>${esc(a.email)}</td><td><button class="danger" onclick="adminDeleteAdmin('${a.id}','${esc(a.email)}')">移除</button></td></tr>`).join('')}</tbody></table></div>`
+}
+function renderAll(){renderIdentity();renderCatalog();renderMyOwned();renderLookupSelectors();renderLookup();renderFlowerOwners();renderAdmin();adminUI()}
+async function boot(){
+ try{
+  let {data:sessionData}=await sb.auth.getSession();
+  const remember=localStorage.getItem(ADMIN_REMEMBER_KEY)==='true';
+
+  // If an administrator session exists but "remember me" was not enabled,
+  // discard it and return to an anonymous member session.
+  if(sessionData.session?.user?.email && !remember){
+    await sb.auth.signOut({scope:'local'});
+    sessionData={session:null};
+  }
+
+  await ensureSession();
+  const {data}=await sb.auth.getUser();
+  sessionUser=data.user;
+  await checkAdmin();
+
+  // Existing remembered admin session: enter admin mode automatically.
+  if(isAdmin && remember){
+    const savedEmail=localStorage.getItem(ADMIN_EMAIL_KEY)||sessionUser?.email||'';
+    if(savedEmail) localStorage.setItem(ADMIN_EMAIL_KEY,savedEmail);
+  }
+
+  adminUI();
+  await loadAll();
+ }catch(e){connection.textContent='❌ 初始化失败：'+e.message}
+}
+boot();
+</script>
+</body>
+</html>
