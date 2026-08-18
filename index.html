@@ -504,7 +504,7 @@ function renderAdminFlowers(keyword=''){
         </thead>
         <tbody>
           ${list.map(f=>`
-            <tr data-name="${esc(f.name)}">
+           <tr data-name="${esc(f.name)}" data-category="${esc(f.category)}">
               <td>${esc(f.name)}</td>
               <td>${f.image_url?`<img src="${esc(f.image_url)}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">`:'—'}</td>
               <td>${esc(f.category)}</td>
@@ -528,8 +528,9 @@ function renderAdminFlowers(keyword=''){
   const rows=document.querySelectorAll('#adminFlowersTable tbody tr');
 
   rows.forEach(row=>{
-    const name=(row.dataset.name||'').toLowerCase();
-    row.style.display=!q || name.includes(q) ? '' : 'none';
+   const name=(row.dataset.name||'').toLowerCase();
+const category=(row.dataset.category||'').toLowerCase();
+row.style.display=!q || name.includes(q) || category.includes(q) ? '' : 'none';
   });
 
   const visible=[...rows].filter(row=>row.style.display!=='none').length;
