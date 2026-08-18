@@ -181,7 +181,8 @@ async function ensureSession(){
 async function checkAdmin(){
  if(!sessionUser || !sessionUser.email){isAdmin=false;return}
  const {data,error}=await sb.rpc('is_admin');
- isAdmin=!error&&data===true
+isAdmin=!error&&data===true;
+renderLookup();
 }
 async function loadAll(){
  try{
