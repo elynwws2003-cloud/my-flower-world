@@ -261,11 +261,26 @@ async function changeQty(flowerId,delta){
  await sb.from('member_flowers').update({quantity:n}).eq('member_id',mine.id).eq('flower_id',flowerId);
  if(r.error)return alert(r.error.message);await loadAll()
 }
+  async function removeMyFlower(flowerId){
+  const mine=myMember();
+  if(!mine)return;
+
+  if(!confirm('确定要把这朵花从“我已拥有”中删除吗？'))return;
+
+  const r=await sb.from('member_flowers')
+    .delete()
+    .eq('member_id',mine.id)
+    .eq('flower_id',flowerId);
+
+  if(r.error)return alert('删除失败：'+r.error.message);
+
+  await loadAll();
+}
 function renderMyOwned(){
  const mine=myMember();if(!mine){myOwned.innerHTML='';return}
  const rows=memberFlowers.filter(x=>x.member_id===mine.id&&x.quantity>0);
  if(!rows.length){myOwned.innerHTML='<div class="hint">还没有添加花花</div>';return}
- myOwned.innerHTML=`<div class="table-wrap"><table><thead><tr><th>花名</th><th>分类</th><th>数量</th><th>公会竞赛分</th><th>操作</th></tr></thead><tbody>${rows.map(r=>{const f=flowers.find(x=>x.id===r.flower_id);if(!f)return'';return `<tr><td>${esc(f.name)}</td><td>${esc(f.category)}</td><td>${r.quantity}</td><td>${f.guild_score||0}</td><td><button class="secondary" onclick="changeQty('${f.id}',1)">＋1</button> <button class="secondary" onclick="changeQty('${f.id}',-1)">－1</button></td></tr>`}).join('')}</tbody></table></div>`
+ myOwned.innerHTML=`<div class="table-wrap"><table><thead><tr><th>花名</th><th>分类</th><th>数量</th><th>公会竞赛分</th><th>操作</th></tr></thead><tbody>${rows.map(r=>{const f=flowers.find(x=>x.id===r.flower_id);if(!f)return'';return `<tr><td>${esc(f.name)}</td><td>${esc(f.category)}</td><td>${r.quantity}</td><td>${f.guild_score||0}</td><td><button class="secondary" onclick="changeQty('${f.id}',1)">＋1</button> <button class="secondary" onclick="changeQty('${f.id}',-1)">－1</button> <button class="danger" onclick="removeMyFlower('${f.id}')">删除</button></td></tr>`}).join('')}</tbody></table></div>`
 }
 function renderLookupSelectors(){
  const oldMember=lookupMember.value, oldFlower=lookupFlower?.value||'';
@@ -278,7 +293,21 @@ function renderLookup(){
  if(!m){lookupSummary.textContent='请选择成员';lookupResult.innerHTML='';return}
  const rows=memberFlowers.filter(x=>x.member_id===id&&x.quantity>0).map(r=>({r,f:flowers.find(x=>x.id===r.flower_id)})).filter(x=>x.f);
  lookupSummary.textContent=`正在查看：${m.name}`;
- lookupResult.innerHTML=rows.length?`<div class="grid" style="margin-top:14px">${rows.map(x=>`<div class="flower">${x.f.image_url?`<img src="${esc(x.f.image_url)}" alt="${esc(x.f.name)}">`:'<div class="noimg">🌼</div>'}<b>${esc(x.f.name)}</b> <span class="tag">${esc(x.f.category)}</span><div class="score">公会竞赛分：${x.f.guild_score||0}</div></div>`).join('')}</div>`:'<div class="hint">这个成员还没有花花记录</div>'
+ lookupResult.innerHTML=rows.length?`<div class="grid" style="margin-top:14px">${rows.map(x=>`<div class="flower">${x.f.image_url?`<img src="${esc(x.f.image_url)}" alt="${esc(x.f.name)}">`:'<div class="noimg">🌼</div>'}<b>${esc(x.f.name)}</b> <span class="tag">${esc(x.f.category)}</span><div class="score">公会竞赛分：${x.f.guild_score||0}</div>${isAdmin?`<button class="danger" style="margin-top:8px" onclick="adminRemoveMemberFlower('${m.id}','${x.f.id}')">删除</button>`:''}</div>`).join('')}</div>`:'<div class="hint">这个成员还没有花花记录</div>'
+}
+  async function adminRemoveMemberFlower(memberId,flowerId){
+  if(!isAdmin)return alert('只有管理员可以执行这个操作');
+
+  if(!confirm('确定要从这个成员名下删除这朵花吗？'))return;
+
+  const r=await sb.from('member_flowers')
+    .delete()
+    .eq('member_id',memberId)
+    .eq('flower_id',flowerId);
+
+  if(r.error)return alert('删除失败：'+r.error.message);
+
+  await loadAll();
 }
 function renderFlowerLookupOptions(selected=''){
  if(!window.lookupFlower)return;
