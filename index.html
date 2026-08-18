@@ -487,6 +487,14 @@ function renderAdminFlowers(keyword=''){
         oninput="filterAdminFlowers(this.value)"
         style="width:100%;padding:12px 14px;font-size:16px;"
       >
+      <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">
+  <button class="secondary" onclick="filterAdminFlowersByCategory('')">全部</button>
+  <button class="secondary" onclick="filterAdminFlowersByCategory('凡')">凡</button>
+  <button class="secondary" onclick="filterAdminFlowersByCategory('普')">普</button>
+  <button class="secondary" onclick="filterAdminFlowersByCategory('珍')">珍</button>
+  <button class="secondary" onclick="filterAdminFlowersByCategory('华')">华</button>
+  <button class="secondary" onclick="filterAdminFlowersByCategory('仙')">仙</button>
+</div>
       <div id="adminFlowerCount" class="hint" style="margin-top:6px">
   找到 ${list.length} 朵花
 </div>
@@ -537,6 +545,22 @@ row.style.display=!q || name.includes(q) || category.includes(q) ? '' : 'none';
 
   const count=document.getElementById('adminFlowerCount');
   if(count) count.textContent=`找到 ${visible} 朵花`;
+}
+  function filterAdminFlowersByCategory(category){
+  const rows=document.querySelectorAll('#adminFlowersTable tbody tr');
+
+  rows.forEach(row=>{
+    const rowCategory=(row.dataset.category||'').trim();
+    row.style.display=!category || rowCategory===category ? '' : 'none';
+  });
+
+  const visible=[...rows].filter(row=>row.style.display!=='none').length;
+
+  const count=document.getElementById('adminFlowerCount');
+  if(count) count.textContent=`找到 ${visible} 朵花`;
+
+  const search=document.getElementById('adminFlowerSearch');
+  if(search) search.value='';
 }
  function renderAdmin(){
   if(!isAdmin)return;
