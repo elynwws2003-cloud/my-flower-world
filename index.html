@@ -395,15 +395,14 @@ function renderAdminFlowers(keyword=''){
         type="text"
         placeholder="🔎 搜寻已添加的花"
         value="${esc(keyword)}"
-        oninput="renderAdminFlowers(this.value)"
+        oninput="filterAdminFlowers(this.value)"
         style="width:100%;padding:12px 14px;font-size:16px;"
       >
-      <div class="hint" style="margin-top:6px">
-        找到 ${list.length} 朵花
-      </div>
+      <div id="adminFlowerCount" class="hint" style="margin-top:6px">
+  找到 ${list.length} 朵花
+</div>
     </div>
-
-    <div class="table-wrap">
+    <div class="table-wrap" id="adminFlowersTable">
       <table>
         <thead>
           <tr>
@@ -416,7 +415,7 @@ function renderAdminFlowers(keyword=''){
         </thead>
         <tbody>
           ${list.map(f=>`
-            <tr>
+            <tr data-name="${esc(f.name)}">
               <td>${esc(f.name)}</td>
               <td>${f.image_url?`<img src="${esc(f.image_url)}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">`:'—'}</td>
               <td>${esc(f.category)}</td>
@@ -433,6 +432,21 @@ function renderAdminFlowers(keyword=''){
         </tbody>
       </table>
     </div>`;
+}
+  function filterAdminFlowers(keyword){
+  const q=String(keyword||'').trim().toLowerCase();
+
+  const rows=document.querySelectorAll('#adminFlowersTable tbody tr');
+
+  rows.forEach(row=>{
+    const name=(row.dataset.name||'').toLowerCase();
+    row.style.display=!q || name.includes(q) ? '' : 'none';
+  });
+
+  const visible=[...rows].filter(row=>row.style.display!=='none').length;
+
+  const count=document.getElementById('adminFlowerCount');
+  if(count) count.textContent=`找到 ${visible} 朵花`;
 }
  function renderAdmin(){
   if(!isAdmin)return;
