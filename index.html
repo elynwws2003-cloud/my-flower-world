@@ -243,7 +243,13 @@ function renderCatalog(){
  ${f.image_url?`<img src="${esc(f.image_url)}" alt="${esc(f.name)}">`:'<div class="noimg">🌼</div>'}
  <b>${esc(f.name)}</b> <span class="tag">${esc(f.category)}</span>
  <div class="score">公会竞赛分：${f.guild_score||0}</div>
- <button class="${owned.has(f.id)?'secondary':'primary'}" style="width:100%;margin-top:8px" onclick="addMine('${f.id}')">${owned.has(f.id)?'＋ 再加1朵':'＋ 添加这朵花'}</button>
+${owned.has(f.id)
+? `<div style="display:flex;gap:6px;margin-top:8px">
+    <button class="secondary" style="flex:1" onclick="addMine('${f.id}')">＋ 再加1朵</button>
+    <button class="danger" style="flex:1" onclick="removeMyFlower('${f.id}')">🗑 删除</button>
+   </div>`
+: `<button class="primary" style="width:100%;margin-top:8px" onclick="addMine('${f.id}')">＋ 添加这朵花</button>`
+}
  </div>`).join('')||'<div class="hint">没有找到花</div>'
 }
 async function addMine(flowerId){
