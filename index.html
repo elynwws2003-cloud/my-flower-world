@@ -253,14 +253,40 @@ ${owned.has(f.id)
  </div>`).join('')||'<div class="hint">没有找到花</div>'
 }
 async function addMine(flowerId){
- const mine=myMember();if(!mine)return;
- const row=memberFlowers.find(x=>x.member_id===mine.id&&x.flower_id===flowerId);
- let r;
- if(row)r=await sb.from('member_flowers').update({quantity:(row.quantity||0)+1}).eq('member_id',mine.id).eq('flower_id',flowerId);
- else r=await sb.from('member_flowers').insert({member_id:mine.id,flower_id:flowerId,quantity:1});
- if(r.error)return alert(r.error.message);await loadAll()
-}
-async function changeQty(flowerId,delta){
+  const mine=myMember();
+  if(!mine)return;
+
+  const {data:existing,error:findError}=await sb
+    .from('member_flowers')
+    .select('quantity')
+    .eq('member_id',mine.id)
+    .eq('flower_id',flowerId)
+    .maybeSingle();
+
+  if(findError)return alert(findError.message);
+
+  let r;
+
+  if(existing){
+    r=await sb
+      .from('member_flowers')
+      .update({quantity:(existing.quantity||0)+1})
+      .eq('member_id',mine.id)
+      .eq('flower_id',flowerId);
+  }else{
+    r=await sb
+      .from('member_flowers')
+      .insert({
+        member_id:mine.id,
+        flower_id:flowerId,
+        quantity:1
+      });
+    if(r.error)return alert(r.error.message);
+
+await loadAll();
+  }
+
+  async function changeQty(flowerId,delta){
  const mine=myMember();if(!mine)return;
  const row=memberFlowers.find(x=>x.member_id===mine.id&&x.flower_id===flowerId);if(!row)return;
  const n=Math.max(0,(row.quantity||0)+delta);
