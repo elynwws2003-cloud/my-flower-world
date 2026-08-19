@@ -118,7 +118,7 @@ button{border:none;font-weight:700;cursor:pointer}.primary{background:var(--pink
 </div>
   <div class="row" style="margin-top:12px">
   <input id="batchRareFlowerImages" type="file" accept="image/*" multiple webkitdirectory>
-  <button class="primary" onclick="adminBatchAddRareFlowers()">📁 批量上传珍花</button>
+ <button class="primary" onclick="adminBatchAddFlowers()">📁 批量上传花花</button>
 </div>
 <div class="hint">只有管理员可以上传图片及修改公会竞赛分。</div>
 <div id="adminFlowers"></div>
@@ -401,15 +401,15 @@ async function adminAddFlower(){
  if(r.error)return alert(r.error.message);
  newFlowerName.value='';newFlowerScore.value='0';newFlowerImage.value='';await loadAll()
 }
-  async function adminBatchAddRareFlowers(){
+  async function adminBatchAddFlowers(){
   if(!isAdmin)return alert('只有管理员可以批量上传');
 
   const files=[...(batchRareFlowerImages.files||[])]
     .filter(file=>file.type && file.type.startsWith('image/'));
 
-  if(!files.length)return alert('请选择珍花图片文件夹');
+  if(!files.length)return alert('请选择花花图片文件夹');
 
-  if(!confirm(`准备上传 ${files.length} 张珍花图片，分类将自动设为“珍”，公会竞赛分为 0。确定继续吗？`))return;
+  if(!confirm(`准备上传 ${files.length} 张花花图片，系统会根据文件夹名称自动判断分类（凡/普/珍/华/仙），公会竞赛分为 0。确定继续吗？`))return;
 
   let success=0;
   let skipped=0;
@@ -421,6 +421,26 @@ async function adminAddFlower(){
 
   for(const file of files){
     try{
+      // 根据所选文件夹名称自动判断分类
+const relativePath = file.webkitRelativePath || '';
+const pathParts = relativePath.split('/');
+
+const validCategories = ['凡','普','珍','华','仙'];
+
+let category = '';
+
+for(const part of pathParts){
+    if(validCategories.includes(part)){
+        category = part;
+        break;
+    }
+}
+
+if(!category){
+    console.warn('无法判断分类：', relativePath);
+    failed++;
+    continue;
+}
       // 用图片文件名作为花名，并去掉 .jpg / .png 等扩展名
       const name=file.name.replace(/\.[^.]+$/,'').trim();
 
@@ -455,7 +475,7 @@ async function adminAddFlower(){
       // 3. 自动加入 flowers 表
       const r=await sb.from('flowers').insert({
         name:name,
-        category:'珍',
+        category:category,
         guild_score:0,
         image_url:image_url
       });
