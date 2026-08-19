@@ -538,18 +538,18 @@ function renderAdminFlowers(keyword=''){
         style="width:100%;padding:12px 14px;font-size:16px;"
       >
       <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">
-  <button class="secondary" onclick="filterAdminFlowersByCategory('')">全部</button>
-  <button class="secondary" onclick="filterAdminFlowersByCategory('凡')">凡</button>
-  <button class="secondary" onclick="filterAdminFlowersByCategory('普')">普</button>
-  <button class="secondary" onclick="filterAdminFlowersByCategory('珍')">珍</button>
-  <button class="secondary" onclick="filterAdminFlowersByCategory('华')">华</button>
-  <button class="secondary" onclick="filterAdminFlowersByCategory('仙')">仙</button>
+ <button class="secondary" onclick="filterAdminFlowersByCategory('')">📂 全部花花</button>
+<button class="secondary" onclick="filterAdminFlowersByCategory('凡')">📁 凡</button>
+<button class="secondary" onclick="filterAdminFlowersByCategory('普')">📁 普</button>
+<button class="secondary" onclick="filterAdminFlowersByCategory('珍')">📁 珍</button>
+<button class="secondary" onclick="filterAdminFlowersByCategory('华')">📁 华</button>
+<button class="secondary" onclick="filterAdminFlowersByCategory('仙')">📁 仙</button>
 </div>
       <div id="adminFlowerCount" class="hint" style="margin-top:6px">
   找到 ${list.length} 朵花
 </div>
     </div>
-    <div class="table-wrap" id="adminFlowersTable">
+   <div class="table-wrap" id="adminFlowersTable" style="display:none">
       <table>
         <thead>
           <tr>
@@ -581,6 +581,8 @@ function renderAdminFlowers(keyword=''){
     </div>`;
 }
   function filterAdminFlowers(keyword){
+    const table=document.getElementById('adminFlowersTable');
+if(table) table.style.display='block';
   const q=String(keyword||'').trim().toLowerCase();
 
   const rows=document.querySelectorAll('#adminFlowersTable tbody tr');
@@ -597,6 +599,8 @@ row.style.display=!q || name.includes(q) || category.includes(q) ? '' : 'none';
   if(count) count.textContent=`找到 ${visible} 朵花`;
 }
   function filterAdminFlowersByCategory(category){
+    const table=document.getElementById('adminFlowersTable');
+if(table) table.style.display='block';
   const rows=document.querySelectorAll('#adminFlowersTable tbody tr');
 
   rows.forEach(row=>{
