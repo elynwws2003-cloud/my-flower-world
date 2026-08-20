@@ -287,6 +287,15 @@ async function addMine(flowerId){
 alert('数据库写入成功');
 
   await loadAll();
+  const refreshed=memberFlowers.find(
+  x=>x.member_id===mine.id && x.flower_id===flowerId
+);
+
+alert(
+  refreshed
+    ? '重新读取成功，数量：'+refreshed.quantity
+    : '重新读取后找不到这朵花'
+);
 }
 
   async function changeQty(flowerId,delta){
