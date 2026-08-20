@@ -255,6 +255,7 @@ ${owned.has(f.id)
 async function addMine(flowerId){
   alert('测试：添加按钮有被执行');
   const mine=myMember();
+  alert('当前成员ID：' + (mine ? mine.id : '没有找到成员'));
   if(!mine)return;
 
   const {data:existing,error:findError}=await sb
