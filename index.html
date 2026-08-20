@@ -278,33 +278,47 @@ async function addMine(flowerId){
   const mine=myMember();
   if(!mine)return;
 
-  const row=memberFlowers.find(
+  let row=memberFlowers.find(
     x=>x.member_id===mine.id && x.flower_id===flowerId
   );
 
   let r;
 
   if(row){
+    const newQty=(row.quantity||0)+1;
+
     r=await sb
       .from('member_flowers')
-      .update({quantity:(row.quantity||0)+1})
+      .update({quantity:newQty})
       .eq('member_id',mine.id)
       .eq('flower_id',flowerId);
+
+    if(r.error)return alert(r.error.message);
+
+    row.quantity=newQty;
+
   }else{
     r=await sb
       .from('member_flowers')
-      .insert({
+      .upsert({
         member_id:mine.id,
         flower_id:flowerId,
         quantity:1
+      },{
+        onConflict:'member_id,flower_id'
       });
+
+    if(r.error)return alert(r.error.message);
+
+    memberFlowers.push({
+      member_id:mine.id,
+      flower_id:flowerId,
+      quantity:1
+    });
   }
 
-  if(r.error)return alert(r.error.message);
-
-  await loadAll();
+  renderAll();
 }
-
   async function changeQty(flowerId,delta){
  const mine=myMember();if(!mine)return;
  const row=memberFlowers.find(x=>x.member_id===mine.id&&x.flower_id===flowerId);if(!row)return;
