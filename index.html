@@ -211,7 +211,7 @@ async function loadAll(){
  const [m,f,mf]=await Promise.all([
   sb.from('members').select('*').order('name'),
   sb.from('flowers').select('*').order('category').order('name'),
-  loadAllMemberFlowers()
+  sb.from('member_flowers').select('*').range(0,1999)
 ]);
   if(m.error)throw m.error;if(f.error)throw f.error;if(mf.error)throw mf.error;
   members=m.data||[];flowers=f.data||[];memberFlowers=mf.data||[];
