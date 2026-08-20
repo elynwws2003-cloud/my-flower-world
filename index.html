@@ -253,44 +253,29 @@ ${owned.has(f.id)
  </div>`).join('')||'<div class="hint">没有找到花</div>'
 }
 async function addMine(flowerId){
-  alert('测试：添加按钮有被执行');
   const mine=myMember();
-  alert('当前成员ID：' + (mine ? mine.id : '没有找到成员'));
-  alert('当前花朵ID：' + flowerId);
   if(!mine)return;
 
-  const {data:existing,error:findError}=await sb
-    .from('member_flowers')
-    .select('quantity')
-    .eq('member_id',mine.id)
-    .eq('flower_id',flowerId)
-    .maybeSingle();
+  const current=memberFlowers.find(
+    x=>x.member_id===mine.id && x.flower_id===flowerId
+  );
 
-  if(findError)return alert(findError.message);
+  const newQuantity=current ? (current.quantity||0)+1 : 1;
 
-  let r;
-
-  if(existing){
-    r=await sb
-      .from('member_flowers')
-      .update({quantity:(existing.quantity||0)+1})
-      .eq('member_id',mine.id)
-      .eq('flower_id',flowerId);
- }else{
-  r=await sb
+  const {error}=await sb
     .from('member_flowers')
     .upsert({
       member_id:mine.id,
       flower_id:flowerId,
-      quantity:1
+      quantity:newQuantity
     },{
       onConflict:'member_id,flower_id'
     });
-    }
-    if(r.error)return alert(r.error.message);
 
-await loadAll();
-  }
+  if(error)return alert('添加失败：'+error.message);
+
+  await loadAll();
+}
 
   async function changeQty(flowerId,delta){
  const mine=myMember();if(!mine)return;
