@@ -273,14 +273,16 @@ async function addMine(flowerId){
       .update({quantity:(existing.quantity||0)+1})
       .eq('member_id',mine.id)
       .eq('flower_id',flowerId);
-  }else{
-    r=await sb
-      .from('member_flowers')
-      .insert({
-        member_id:mine.id,
-        flower_id:flowerId,
-        quantity:1
-      });
+ }else{
+  r=await sb
+    .from('member_flowers')
+    .upsert({
+      member_id:mine.id,
+      flower_id:flowerId,
+      quantity:1
+    },{
+      onConflict:'member_id,flower_id'
+    });
     if(r.error)return alert(r.error.message);
 
 await loadAll();
