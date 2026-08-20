@@ -283,6 +283,7 @@ async function addMine(flowerId){
     },{
       onConflict:'member_id,flower_id'
     });
+    }
     if(r.error)return alert(r.error.message);
 
 await loadAll();
