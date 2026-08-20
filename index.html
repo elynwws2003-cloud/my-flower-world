@@ -273,7 +273,18 @@ async function addMine(flowerId){
       onConflict:'member_id,flower_id'
     });
 
-  if(error)return alert('添加失败：'+error.message);
+  if(error){
+  alert(
+    '添加失败\n\n' +
+    'message: ' + error.message + '\n' +
+    'code: ' + (error.code||'') + '\n' +
+    'details: ' + (error.details||'') + '\n' +
+    'hint: ' + (error.hint||'')
+  );
+  return;
+}
+
+alert('数据库写入成功');
 
   await loadAll();
 }
