@@ -82,6 +82,14 @@ button{border:none;font-weight:700;cursor:pointer}.primary{background:var(--pink
 
 <h3>按成员查询</h3>
 <select id="lookupMember" onchange="renderLookup()" style="width:100%"></select>
+  <select id="lookupCategory" onchange="renderLookup()" style="width:100%;margin-top:10px">
+  <option value="">全部分类</option>
+  <option value="凡">凡</option>
+  <option value="普">普</option>
+  <option value="珍">珍</option>
+  <option value="华">华</option>
+  <option value="仙">仙</option>
+</select>
 <div id="lookupSummary" class="status">请选择成员</div>
 <div id="lookupResult"></div>
 
@@ -404,11 +412,43 @@ function renderLookupSelectors(){
  renderFlowerLookupOptions(oldFlower);
 }
 function renderLookup(){
- const id=lookupMember.value,m=members.find(x=>x.id===id);
- if(!m){lookupSummary.textContent='请选择成员';lookupResult.innerHTML='';return}
- const rows=memberFlowers.filter(x=>x.member_id===id&&x.quantity>0).map(r=>({r,f:flowers.find(x=>x.id===r.flower_id)})).filter(x=>x.f);
- lookupSummary.textContent=`正在查看：${m.name}`;
- lookupResult.innerHTML=rows.length?`<div class="grid" style="margin-top:14px">${rows.map(x=>`<div class="flower">${x.f.image_url?`<img src="${esc(x.f.image_url)}" alt="${esc(x.f.name)}">`:'<div class="noimg">🌼</div>'}<b>${esc(x.f.name)}</b> <span class="tag">${esc(x.f.category)}</span><div class="score">公会竞赛分：${x.f.guild_score||0}</div>${isAdmin?`<button class="danger" style="margin-top:8px" onclick="adminRemoveMemberFlower('${m.id}','${x.f.id}')">删除</button>`:''}</div>`).join('')}</div>`:'<div class="hint">这个成员还没有花花记录</div>'
+  const id=lookupMember.value;
+  const m=members.find(x=>x.id===id);
+  const category=lookupCategory.value;
+
+  if(!m){
+    lookupSummary.textContent='请选择成员';
+    lookupResult.innerHTML='';
+    return;
+  }
+
+  let rows=memberFlowers
+    .filter(x=>x.member_id===id && x.quantity>0)
+    .map(r=>({r,f:flowers.find(x=>x.id===r.flower_id)}))
+    .filter(x=>x.f);
+
+  if(category){
+    rows=rows.filter(x=>x.f.category===category);
+  }
+
+  lookupSummary.textContent=
+    `正在查看：${m.name}${category ? '｜分类：'+category : ''}`;
+
+  lookupResult.innerHTML=rows.length
+    ? `<div class="grid" style="margin-top:14px">${
+        rows.map(x=>`
+          <div class="flower">
+            ${x.f.image_url
+              ? `<img src="${esc(x.f.image_url)}" alt="${esc(x.f.name)}">`
+              : `<div class="noimg">🌼</div>`
+            }
+            <b>${esc(x.f.name)}</b>
+            <span class="tag">${esc(x.f.category)}</span>
+            <div class="score">公会竞赛分：${x.f.guild_score||0}</div>
+          </div>
+        `).join('')
+      }</div>`
+    : `<div class="hint">这个分类还没有花花记录</div>`;
 }
   async function adminRemoveMemberFlower(memberId,flowerId){
   if(!isAdmin)return alert('只有管理员可以执行这个操作');
