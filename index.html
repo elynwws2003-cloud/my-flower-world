@@ -208,13 +208,24 @@ renderLookup();
 }
 async function loadAll(){
  try{
- const [m,f,mf]=await Promise.all([
+const [m,f,mf1,mf2]=await Promise.all([
   sb.from('members').select('*').order('name'),
   sb.from('flowers').select('*').order('category').order('name'),
-  sb.from('member_flowers').select('*').range(0,1999)
+  sb.from('member_flowers').select('*').range(0,999),
+  sb.from('member_flowers').select('*').range(1000,1999)
 ]);
-  if(m.error)throw m.error;if(f.error)throw f.error;if(mf.error)throw mf.error;
-  members=m.data||[];flowers=f.data||[];memberFlowers=mf.data||[];
+
+if(m.error)throw m.error;
+if(f.error)throw f.error;
+if(mf1.error)throw mf1.error;
+if(mf2.error)throw mf2.error;
+
+members=m.data||[];
+flowers=f.data||[];
+memberFlowers=[
+  ...(mf1.data||[]),
+  ...(mf2.data||[])
+];
   if(isAdmin){
    const a=await sb.from('admins').select('*').order('email');
    admins=a.error?[]:(a.data||[]);
