@@ -278,10 +278,11 @@ function renderCatalog(){
  <div class="score">公会竞赛分：${f.guild_score||0}</div>
 ${owned.has(f.id)
 ? `<div style="display:flex;gap:6px;margin-top:8px">
-   <button class="secondary" style="flex:1" disabled>✓ 已拥有</button>
+    <button class="secondary" style="flex:1" disabled>✓ 已拥有</button>
     <button class="danger" style="flex:1" onclick="removeMyFlower('${f.id}')">🗑 删除</button>
    </div>`
 : `<button class="primary" style="width:100%;margin-top:8px" onclick="addMine('${f.id}')">＋ 添加这朵花</button>`
+}
 }
  </div>`).join('')||'<div class="hint">没有找到花</div>'
 }
