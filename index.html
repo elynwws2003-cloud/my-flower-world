@@ -354,10 +354,47 @@ async function addMine(flowerId){
   await loadAll();
 }
 function renderMyOwned(){
- const mine=myMember();if(!mine){myOwned.innerHTML='';return}
- const rows=memberFlowers.filter(x=>x.member_id===mine.id&&x.quantity>0);
- if(!rows.length){myOwned.innerHTML='<div class="hint">还没有添加花花</div>';return}
- myOwned.innerHTML=`<div class="table-wrap"><table><thead><tr><th>花名</th><th>分类</th><th>数量</th><th>公会竞赛分</th><th>操作</th></tr></thead><tbody>${rows.map(r=>{const f=flowers.find(x=>x.id===r.flower_id);if(!f)return'';return `<tr><td>${esc(f.name)}</td><td>${esc(f.category)}</td><td>${r.quantity}</td><td>${f.guild_score||0}</td><td><button class="secondary" onclick="changeQty('${f.id}',1)">＋1</button> <button class="secondary" onclick="changeQty('${f.id}',-1)">－1</button> <button class="danger" onclick="removeMyFlower('${f.id}')">删除</button></td></tr>`}).join('')}</tbody></table></div>`
+  const mine=myMember();
+  if(!mine){
+    myOwned.innerHTML='';
+    return;
+  }
+
+  const rows=memberFlowers.filter(
+    x=>x.member_id===mine.id && x.quantity>0
+  );
+
+  if(!rows.length){
+    myOwned.innerHTML='<div class="hint">还没有添加花花</div>';
+    return;
+  }
+
+  myOwned.innerHTML=`
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>花名</th>
+            <th>分类</th>
+            <th>公会竞赛分</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>{
+            const f=flowers.find(x=>x.id===r.flower_id);
+            if(!f)return '';
+            return `
+              <tr>
+                <td>${esc(f.name)}</td>
+                <td>${esc(f.category)}</td>
+                <td>${f.guild_score||0}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 function renderLookupSelectors(){
  const oldMember=lookupMember.value, oldFlower=lookupFlower?.value||'';
