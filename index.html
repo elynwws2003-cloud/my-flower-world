@@ -219,8 +219,17 @@ async function loadAll(){
 const [m,f,mf1,mf2]=await Promise.all([
   sb.from('members').select('*').order('name'),
   sb.from('flowers').select('*').order('category').order('name'),
-  sb.from('member_flowers').select('*').range(0,999),
-  sb.from('member_flowers').select('*').range(1000,1999)
+ sb.from('member_flowers')
+  .select('*')
+  .order('member_id')
+  .order('flower_id')
+  .range(0,999),
+
+sb.from('member_flowers')
+  .select('*')
+  .order('member_id')
+  .order('flower_id')
+  .range(1000,1999)
 ]);
 
 if(m.error)throw m.error;
