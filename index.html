@@ -663,6 +663,27 @@ if(!category){
 async function adminUpdateScore(id,v){
  const r=await sb.from('flowers').update({guild_score:Math.max(0,Number(v)||0)}).eq('id',id);if(r.error)return alert(r.error.message);await loadAll()
 }
+  async function adminUpdateFlowerName(id,name){
+  name=String(name||'').trim();
+
+  if(!name){
+    alert('花名不能为空');
+    await loadAll();
+    return;
+  }
+
+  const r=await sb
+    .from('flowers')
+    .update({name:name})
+    .eq('id',id);
+
+  if(r.error){
+    alert('修改失败：'+r.error.message);
+    return;
+  }
+
+  await loadAll();
+}
 async function adminDeleteFlower(id){
  if(!confirm('确定删除这朵花吗？成员收藏里的这朵花也会一起移除。'))return;
  const r=await sb.from('flowers').delete().eq('id',id);if(r.error)return alert(r.error.message);await loadAll()
@@ -717,7 +738,14 @@ function renderAdminFlowers(keyword=''){
         <tbody>
           ${list.map(f=>`
            <tr data-name="${esc(f.name)}" data-category="${esc(f.category)}">
-              <td>${esc(f.name)}</td>
+            <td>
+  <input
+    type="text"
+    value="${esc(f.name)}"
+    style="width:160px"
+    onchange="adminUpdateFlowerName('${f.id}',this.value)"
+  >
+</td>
               <td>${f.image_url?`<img src="${esc(f.image_url)}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">`:'—'}</td>
               <td>${esc(f.category)}</td>
               <td>
